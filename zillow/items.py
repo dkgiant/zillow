@@ -13,9 +13,9 @@ class ZillowItem(scrapy.Item):
     id = scrapy.Field(
         output_processor = TakeFirst()
     )
-    img_src = scrapy.Field(
-        output_processor = TakeFirst()
-    )
+    image_urls = scrapy.Field()
+    images = scrapy.Field()
+
     detail_url = scrapy.Field(
         output_processor = TakeFirst()
     )
