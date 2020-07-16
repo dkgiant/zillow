@@ -1,23 +1,27 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy.loader import ItemLoader
-from ..utils import URL, cookie_parser
+from ..utils import URL, cookie_parser,parse_new_url
 from ..items import ZillowItem
 import json
 
 class ZillowHousesSpider(scrapy.Spider):
     name = 'zillow_houses'
     allowed_domains = ['www.zillow.com']
-    start_urls = [URL]
+    
     
     def start_requests(self):
         yield scrapy.Request(
             url = URL,
             callback = self.parse,
-            cookies=cookie_parser()
+            cookies=cookie_parser(),
+            meta={
+                'current_page':1
+            }
         )
 
     def parse(self, response):
+        current_page = response.meta['current_page']
         json_resp = json.loads(response.body)
         houses = json_resp.get('searchResults').get('listResults')
         for house in houses:
@@ -35,4 +39,15 @@ class ZillowHousesSpider(scrapy.Spider):
             loader.add_value('broker_name',house.get('brokerName'))
             loader.add_value('broker_phone',house.get('brokerPhone'))
             yield loader.load_item()
-
+        
+        total_pages = json_resp.get('searchList').get('totalPages')
+        if current_page <= total_pages:
+            next_page = current_page+1
+            yield scrapy.Request(
+                url = parse_new_url(URL,page_number=next_page),
+                callback = self.parse,
+                cookies=cookie_parser(),
+                meta={
+                    'current_page':next_page
+                }
+            )
