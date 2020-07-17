@@ -65,7 +65,7 @@ DOWNLOAD_DELAY = 10
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'scrapy.pipelines.images.ImagesPipeline': 1,
+   'zillow.pipelines.ZillowPipeline': 1,
 }
 IMAGES_STORE = '.'
 
