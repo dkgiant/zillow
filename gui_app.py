@@ -6,6 +6,7 @@ from scrapy import spiderloader
 from scrapy.utils.log import configure_logging
 from scrapy.crawler import CrawlerRunner
 from twisted.internet import reactor
+import threading
 
 
 def get_spider():
@@ -51,8 +52,18 @@ def execute_spider():
     configure_logging()
     runner = CrawlerRunner(settings)
     runner.crawl(chosen_spider)
-    reactor.run()
+    reactor.run(installSignalHandlers=False)
 
+
+def start_execute_thread(event):
+    global execute_thread
+    execute_thread = threading.Thread(target=execute_spider,daemon=True)
+    execute_thread.start()
+    app.after(10,check_execute_thread)
+
+def check_execute_thread():
+    if execute_thread.is_alive():
+        app.after(10,check_execute_thread)
 
 app = Tk()
 # spider list
@@ -62,8 +73,7 @@ spider_label.grid(row=0, column=0, stick=W, pady=10, padx=10)
 spider_text = StringVar(app)
 spider_text.set('Choose a spider')
 spiders = get_spider()
-spiders_dropdown = OptionMenu(
-    app, spider_text, *spiders, command=get_chosen_spider)
+spiders_dropdown = OptionMenu(app, spider_text, *spiders, command=get_chosen_spider)
 spiders_dropdown.grid(row=0, column=1, stick=W, columnspan=2)
 # Feed type
 feed_label = Label(app, text='Choose a feed')
@@ -89,7 +99,7 @@ dataset_entry.grid(row=2, column=1)
 browse_btn = Button(app, text='Browse', command=browse_btn)
 browse_btn.grid(row=2, column=2)
 
-execute_btn = Button(app, text='Execute', command=execute_spider)
+execute_btn = Button(app, text='Execute', command=lambda:start_execute_thread(None))
 execute_btn.grid(row=3, column=0, columnspan=3)
 
 app.title('Spider Execute')
